@@ -264,19 +264,19 @@ model_rnn <- keras_model_sequential() %>%
   layer_dense(units = num_classes, activation = "softmax")
 
 # loading pretrained weights 
-get_layer(model_unfrozen, index = 1) %>%
+get_layer(model_rnn, index = 1) %>%
   set_weights(list(embedding_matrix)) %>%
   unfreeze_weights()  # allowing the embedding layer to be trainable
 
 # compiling the model
-model %>% compile(
+model_rnn %>% compile(
   loss = 'categorical_crossentropy',
   optimizer = 'sgd',
   metrics = c('accuracy')
 )
 
 # training the model
-history_rnn <- model %>% fit(
+history_rnn <- model_rnn %>% fit(
   data_train, labels_train,
   epochs = 20,
   batch_size = 32,
@@ -284,7 +284,7 @@ history_rnn <- model %>% fit(
 )
 
 # testing the model
-results_rnn <- model %>% evaluate(data_test, labels_test)
+results_rnn <- model_rnn %>% evaluate(data_test, labels_test)
 
 results_rnn
 
@@ -300,7 +300,7 @@ if (F){
 # ----------------------------------------- # 
 
 # building 2 layer RNN model 
-model_rnn <- keras_model_sequential() %>%
+model_rnn_2 <- keras_model_sequential() %>%
   layer_embedding(input_dim = max_words,
                   output_dim = embedding_dim,
                   input_length = maxlen) %>%
@@ -311,15 +311,20 @@ model_rnn <- keras_model_sequential() %>%
   layer_dropout(0.25) %>%
   layer_dense(units = num_classes, activation = "softmax")
 
+# loading pretrained weights 
+get_layer(model_rnn_2, index = 1) %>%
+  set_weights(list(embedding_matrix)) %>%
+  unfreeze_weights()  # allowing the embedding layer to be trainable
+
 # compiling model
-model %>% compile(
+model_rnn_2 %>% compile(
   loss = 'categorical_crossentropy',
   optimizer = 'sgd',
   metrics = c('accuracy')
 )
 
 # training the model
-history_rnn_2 <- model %>% fit(
+history_rnn_2 <- model_rnn_2 %>% fit(
   data_train, labels_train,
   epochs = 20,
   batch_size = 32,
@@ -327,7 +332,7 @@ history_rnn_2 <- model %>% fit(
 )
 
 # testing the model
-results_rnn_2 <- model %>% evaluate(data_test, labels_test)
+results_rnn_2 <- model_rnn_2 %>% evaluate(data_test, labels_test)
 
 results_rnn_2 
 # 2.0981109 0.3988942 
@@ -337,6 +342,49 @@ save(history_rnn_2,results_rnn_2, file = "results_rnn_2.RData")
 if (F){
   load("results_rnn_2.RData")
   plot(history_rnn_2)
+}
+
+# ----------------------------------------- # 
+#### BUILDING LSTM MODEL + EMBEDDING ####
+# ----------------------------------------- # 
+# building lstm model
+lstm_model <- keras_model_sequential() %>%
+  layer_embedding(input_dim =  max_words,
+                  output_dim = embedding_dim,
+                  input_length = maxlen) %>%
+  layer_lstm(units = 128, dropout = 0.1, recurrent_dropout = 0.1) %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dropout(0.25) %>%
+  layer_dense(units = num_classes, activation = "softmax")
+
+# Load pretrained weights (same as before)
+get_layer(lstm_model, index = 1) %>%
+  set_weights(list(embedding_matrix)) %>%
+  unfreeze_weights()  # Allow the embedding layer to be trainable
+
+lstm_model %>% compile(
+  optimizer = "rmsprop",
+  loss = "binary_crossentropy",
+  metrics = c("acc")
+  )
+
+lstm_history <- lstm_model %>% fit(
+  data_train, labels_train,
+  epochs = 20,
+  batch_size = 32,
+  validation_split = 0.2
+  )
+
+# testing the model
+results_lstm <- lstm_model %>% evaluate(data_test, labels_test)
+
+results_lstm 
+
+save(results_lstm,results_lstm, file = "results_lstm.RData")
+
+if (F){
+  load("results_lstm.RData")
+  plot(lstm_history)
 }
 
 
@@ -590,3 +638,38 @@ results_rnn_2
 # 2.0981109 0.3988942 
 
 save(history_rnn_2,results_rnn_2, file = "results_rnn_2.RData")
+
+# building lstm model
+lstm_model <- keras_model_sequential() %>%
+  layer_embedding(input_dim =  max_words,
+                  output_dim = embedding_dim,
+                  input_length = maxlen) %>%
+  layer_lstm(units = 128, dropout = 0.1, recurrent_dropout = 0.1) %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dropout(0.25) %>%
+  layer_dense(units = num_classes, activation = "softmax")
+
+# Load pretrained weights (same as before)
+get_layer(lstm_model, index = 1) %>%
+  set_weights(list(embedding_matrix)) %>%
+  unfreeze_weights()  # Allow the embedding layer to be trainable
+
+lstm_model %>% compile(
+  optimizer = "rmsprop",
+  loss = "binary_crossentropy",
+  metrics = c("acc")
+)
+
+lstm_history <- lstm_model %>% fit(
+  data_train, labels_train,
+  epochs = 20,
+  batch_size = 32,
+  validation_split = 0.2
+)
+
+# testing the model
+results_lstm <- lstm_model %>% evaluate(data_test, labels_test)
+
+results_lstm 
+
+save(results_lstm,results_lstm, file = "results_lstm.RData")
