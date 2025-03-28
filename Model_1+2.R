@@ -138,7 +138,7 @@ for (line in lines) {
   embeddings_index[[word]] <- coefs
 }
 
-# building the embedding matrix (initally all zeros)
+# building the embedding matrix (initially all zeros)
 word_index <- tokenizer$word_index
 
 embedding_matrix <- matrix(0, nrow = max_words, ncol = embedding_dim)
