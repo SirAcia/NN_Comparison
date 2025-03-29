@@ -188,11 +188,33 @@ history_ffn <- model %>% fit(
   validation_split = 0.2
 )
 
+# Helper to get predicted classes and show confusion matrix, we will use this repeatedly
+library(caret)
+
+get_confusion_matrix <- function(model, data_test, labels_test_onehot, label_order) {
+  # Get predictions as probabilities
+  pred_probs <- model %>% predict(data_test)
+  
+  # Convert one-hot encoded labels and predictions to class indices
+  true_classes <- apply(labels_test_onehot, 1, which.max) - 1
+  predicted_classes <- apply(pred_probs, 1, which.max) - 1
+  
+  # Convert to factor with label names
+  true_labels <- factor(label_order[true_classes + 1], levels = label_order)
+  predicted_labels <- factor(label_order[predicted_classes + 1], levels = label_order)
+  
+  # Print confusion matrix
+  print(confusionMatrix(predicted_labels, true_labels))
+}
+
 # testing the model
 results_ffnn <- model %>% evaluate(data_test, labels_test)
   
 results_ffnn
-# loss of 1.8535937, accuracy of 0.3983676 
+# loss of 1.8535937, accuracy of 0.3983676
+
+# Get a more detailed idea of classification results
+get_confusion_matrix(model, data_test, labels_test, label_order)
 
 save(history, results_ffnn, file = "results_ffnn.RData")
 
@@ -239,7 +261,10 @@ history_unfrozen <- model_unfrozen %>% fit(
 results_ffnn_unfrozen <- model_unfrozen %>% evaluate(data_test, labels_test)
 
 results_ffnn_unfrozen 
-# loss of 2.7643116, accuracy of 0.5297525  
+# loss of 2.7643116, accuracy of 0.5297525
+
+# Get a more detailed idea of classification results
+get_confusion_matrix(model_unfrozen, data_test, labels_test, label_order)
 
 save(history_unfrozen,results_ffnn_unfrozen, file = "results_ffnn_unfrozen.RData")
 
@@ -287,6 +312,9 @@ history_rnn <- model_rnn %>% fit(
 results_rnn <- model_rnn %>% evaluate(data_test, labels_test)
 
 results_rnn
+
+# Get a more detailed idea of classification results
+get_confusion_matrix(model_rnn, data_test, labels_test, label_order)
 
 save(history_rnn,results_rnn, file = "results_rnn.RData")
 
@@ -337,6 +365,9 @@ results_rnn_2 <- model_rnn_2 %>% evaluate(data_test, labels_test)
 results_rnn_2 
 # 2.0981109 0.3988942 
 
+# Get a more detailed idea of classification results
+get_confusion_matrix(model_rnn_2, data_test, labels_test, label_order)
+
 save(history_rnn_2,results_rnn_2, file = "results_rnn_2.RData")
 
 if (F){
@@ -379,6 +410,9 @@ lstm_history <- lstm_model %>% fit(
 results_lstm <- lstm_model %>% evaluate(data_test, labels_test)
 
 results_lstm 
+
+# Get a more detailed idea of classification results
+get_confusion_matrix(lstm_model, data_test, labels_test, label_order)
 
 save(results_lstm,results_lstm, file = "results_lstm.RData")
 
