@@ -101,6 +101,36 @@ ggplot(data.frame(length = word_counts), aes(x = length)) +
 tokenizer <- text_tokenizer(num_words = max_words) %>%
   fit_text_tokenizer(texts_train)
 
+# Is a dictionary size of 10K sufficient? Let's explore:
+
+# Extract word frequency counts
+word_freqs <- tokenizer$word_counts
+freq_df <- data.frame(
+  word = names(word_freqs),
+  freq = as.numeric(word_freqs)
+)
+
+# Sort words by frequency (descending)
+freq_df <- freq_df[order(-freq_df$freq), ]
+freq_df$rank <- 1:nrow(freq_df)
+
+# Compute cumulative frequency coverage
+freq_df$cumulative_freq <- cumsum(freq_df$freq)
+freq_df$coverage <- freq_df$cumulative_freq / sum(freq_df$freq)
+
+# Plot cumulative token coverage
+ggplot(freq_df[1:20000, ], aes(x = rank, y = coverage)) +
+  geom_line(color = "darkgreen") +
+  geom_vline(xintercept = 10000, linetype = "dashed", color = "red", linewidth = 1) +
+  labs(
+    title = "Cumulative Token Coverage by Vocabulary Size",
+    x = "Top N Words",
+    y = "Cumulative Coverage"
+  ) +
+  theme_minimal()
+
+# It seems 10K dictionary size is sufficient
+
 # converting tweets into tokens (words)
 sequences_train <- texts_to_sequences(tokenizer, texts_train)
 
