@@ -18,7 +18,8 @@ library(ggplot2)
 rm(list = ls())
 
 # Setting the working directory (note, cannot use this line in the cloud environment)
-setwd("/Users/zachery/Downloads/Deep_Learning_Team_Project")
+#setwd("/Users/zachery/Downloads/Deep_Learning_Team_Project")
+setwd("C:/Users/ibrah/Desktop/Deep Learning in Health/Team Project")
 
 # Load in the datasets
 train <- read.csv("Corona_NLP_train.csv")
@@ -95,7 +96,8 @@ ggplot(data.frame(length = word_counts), aes(x = length)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(title = "Distribution of Tweet Lengths (by Word Count)", 
        x = "Number of Words", 
-       y = "Count")
+       y = "Count") +
+  theme_classic()
 
 # initializing tokenizer to convert strings into tokens 
 tokenizer <- text_tokenizer(num_words = max_words) %>%
@@ -128,6 +130,8 @@ ggplot(freq_df[1:20000, ], aes(x = rank, y = coverage)) +
     y = "Cumulative Coverage"
   ) +
   theme_minimal()
+
+cat("Cumulative coverage at 10,000 words:", round(freq_df$coverage[10000] * 100, 2), "%\n")
 
 # It seems 10K dictionary size is sufficient
 
@@ -218,6 +222,40 @@ history_ffn <- model %>% fit(
   validation_split = 0.2
 )
 
+plot(history_ffn)
+
+# seems that 5 epochs is sufficient, can retrain the final model now
+
+# revised FFNN architecture
+model <- keras_model_sequential() %>%
+  layer_embedding(input_dim = max_words,
+                  output_dim = embedding_dim,
+                  input_length = maxlen) %>%
+  layer_flatten() %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dropout(0.5) %>%
+  layer_dense(units = num_classes, activation = "softmax")
+
+# loading embedding weights and freeze the layer
+get_layer(model, index = 1) %>%
+  set_weights(list(embedding_matrix)) %>%
+  freeze_weights()
+
+# compiling the revised model
+model %>% compile(
+  optimizer = "rmsprop",
+  loss = "categorical_crossentropy",
+  metrics = c("accuracy")
+)
+
+# training the revised model
+history_ffn <- model %>% fit(
+  data_train, labels_train,
+  epochs = 5,
+  batch_size = 32,
+  validation_split = 0.2
+)
+
 # Helper to get predicted classes and show confusion matrix, we will use this repeatedly
 library(caret)
 
@@ -241,7 +279,7 @@ get_confusion_matrix <- function(model, data_test, labels_test_onehot, label_ord
 results_ffnn <- model %>% evaluate(data_test, labels_test)
   
 results_ffnn
-# loss of 1.8535937, accuracy of 0.3983676
+# loss of 1.3923928, accuracy of 0.4054766
 
 # Get a more detailed idea of classification results
 get_confusion_matrix(model, data_test, labels_test, label_order)
