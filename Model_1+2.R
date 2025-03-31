@@ -199,7 +199,7 @@ model <- keras_model_sequential() %>%
                   input_length = maxlen) %>%
   layer_flatten() %>%
   layer_dense(units = 64, activation = "relu") %>%
-  layer_dropout(0.5) %>%
+  layer_dropout(0.1) %>%
   layer_dense(units = num_classes, activation = "softmax")
 
 # loading embedding weights and freeze the layer
@@ -233,7 +233,7 @@ model <- keras_model_sequential() %>%
                   input_length = maxlen) %>%
   layer_flatten() %>%
   layer_dense(units = 64, activation = "relu") %>%
-  layer_dropout(0.5) %>%
+  layer_dropout(0.1) %>%
   layer_dense(units = num_classes, activation = "softmax")
 
 # loading embedding weights and freeze the layer
@@ -248,12 +248,11 @@ model %>% compile(
   metrics = c("accuracy")
 )
 
-# training the revised model
+# training the revised model (use all training data without validation)
 history_ffn <- model %>% fit(
   data_train, labels_train,
   epochs = 5,
-  batch_size = 32,
-  validation_split = 0.2
+  batch_size = 32
 )
 
 # Helper to get predicted classes and show confusion matrix, we will use this repeatedly
@@ -279,7 +278,7 @@ get_confusion_matrix <- function(model, data_test, labels_test_onehot, label_ord
 results_ffnn <- model %>% evaluate(data_test, labels_test)
   
 results_ffnn
-# loss of 1.3923928, accuracy of 0.4054766
+# loss of 1.5376, accuracy of 0.3820
 
 # Get a more detailed idea of classification results
 get_confusion_matrix(model, data_test, labels_test, label_order)
@@ -325,11 +324,45 @@ history_unfrozen <- model_unfrozen %>% fit(
   validation_split = 0.2
 )
 
+plot(history_unfrozen)
+
+# validation loss is increasing after 5 epochs with no improvement in accuracy
+# retrain the model with 5 epochs
+
+# Rebuild the revised model from scratch
+model_unfrozen <- keras_model_sequential() %>%
+  layer_embedding(input_dim = max_words,
+                  output_dim = embedding_dim,
+                  input_length = maxlen) %>%
+  layer_flatten() %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dropout(0.1) %>%
+  layer_dense(units = num_classes, activation = "softmax")
+
+# Load pretrained weights (same as before)
+get_layer(model_unfrozen, index = 1) %>%
+  set_weights(list(embedding_matrix)) %>%
+  unfreeze_weights()  # Allow the embedding layer to be trainable
+
+# Compiling the revised model  
+model_unfrozen %>% compile(
+  optimizer = "rmsprop",
+  loss = "categorical_crossentropy",
+  metrics = c("accuracy")
+)
+
+# training the revised model - using all the data for training (no validation)
+history_unfrozen <- model_unfrozen %>% fit(
+  data_train, labels_train,
+  epochs = 5,
+  batch_size = 32
+)
+
 # testing the model
 results_ffnn_unfrozen <- model_unfrozen %>% evaluate(data_test, labels_test)
 
 results_ffnn_unfrozen 
-# loss of 2.7643116, accuracy of 0.5297525
+# loss of 1.5198, accuracy of 0.5355 - some improvement from the frozen model
 
 # Get a more detailed idea of classification results
 get_confusion_matrix(model_unfrozen, data_test, labels_test, label_order)
