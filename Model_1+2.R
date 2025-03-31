@@ -41,6 +41,16 @@ dim(test)
 train <- train[,c(5,6)]
 test <- test[,c(5,6)]
 
+# Plot class distribution
+ggplot(train, aes(x = factor(Sentiment, levels = c(
+  "Extremely Negative", "Negative", "Neutral", "Positive", "Extremely Positive"
+)))) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribution of Sentiment Classes in Training Set",
+       x = "Sentiment",
+       y = "Count") +
+  theme_classic()
+
 # setting seed 
 set.seed(123)
 
