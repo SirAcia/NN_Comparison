@@ -1049,14 +1049,12 @@ results_lstm_2 <- lstm_model_2 %>% evaluate(data_test, labels_test)
 results_lstm_2
 
 plot(lstm_model_2)
-# similarly, no obvious evidence of overfitting here 
+# maybe some overfitting, cut off at 18 epochs
 
 save(lstm_history_2,results_lstm_2, file = "results_lstm_2.RData")
 
 # loading RData to plot epochs 
 if (F){
-  
-  setwd("/Users/zachery/Downloads/Deep_Learning_Team_Project")
   
   load("results_lstm_2.RData")
   
@@ -1106,7 +1104,7 @@ lstm_model_2 %>% compile(
 
 lstm_history_2 <- lstm_model_2 %>% fit(
   data_train, labels_train,
-  epochs = 20,
+  epochs = 18,
   batch_size = 50
 )
 
